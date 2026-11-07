@@ -1,0 +1,11 @@
+#!/bin/sh
+# to-windows: reboot ONCE into Windows (UEFI BootNext). Ubuntu's boot order is not changed.
+# Installed root-owned in /usr/local/sbin, started from the "Windows" icon via pkexec.
+set -eu
+NUM="$(efibootmgr | sed -n 's/^Boot\([0-9A-Fa-f]\{4\}\)\*\{0,1\} Windows Boot Manager.*/\1/p' | head -n 1)"
+if [ -z "$NUM" ]; then
+	echo "to-windows: no 'Windows Boot Manager' entry found" >&2
+	exit 1
+fi
+efibootmgr --bootnext "$NUM" > /dev/null
+systemctl reboot

@@ -317,6 +317,10 @@ setup_apps() {
 install_ego_extension() {
 	# Download an extension from extensions.gnome.org for this GNOME version.
 	local uuid="$1" shell_major url
+	if [ -d "$HOME/.local/share/gnome-shell/extensions/$uuid" ]; then
+		info "ok      $uuid"
+		return 0
+	fi
 	shell_major="$(gnome-shell --version | grep -oE '[0-9]+' | head -n 1)"
 	url="$(curl -fsSL "https://extensions.gnome.org/extension-info/?uuid=${uuid}&shell_version=${shell_major}" \
 		| jq -r '.download_url // empty')"

@@ -1,0 +1,6 @@
+[Desktop Entry]
+Name=Windows
+Comment=Reboot once into Windows
+Exec=pkexec /usr/local/sbin/to-windows
+Icon=system-reboot
+Type=Application
