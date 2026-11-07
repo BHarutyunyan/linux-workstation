@@ -1,0 +1,6 @@
+{
+  "uuid": "dock-keyboard-autohide@boris",
+  "name": "Dock keyboard autohide",
+  "description": "Hides Ubuntu Dock when keyboard focus leaves it.",
+  "shell-version": ["45", "46", "47", "48", "49", "50"]
+}
