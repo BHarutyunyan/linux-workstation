@@ -334,7 +334,7 @@ install_ego_extension() {
 }
 
 setup_desktop() {
-	step "9. GNOME: extensions, keys, layouts, theme"
+	step "9. GNOME: extensions, keys, layouts, theme, Windows icon"
 	if [ "$SKIP_DESKTOP" = "1" ]; then
 		info "SKIP_DESKTOP=1: skipped"
 		return 0
@@ -355,6 +355,22 @@ setup_desktop() {
 	# E16-only things (screen scale, recent folders) to this machine.
 	dconf load / < "$REPO_DIR/gnome/settings.ini"
 	info "GNOME settings loaded"
+
+	setup_dualboot
+}
+
+setup_dualboot() {
+	# One-click "Windows" icon, only on machines that also boot Windows.
+	if ! sudo efibootmgr 2>/dev/null | grep -q "Windows Boot Manager"; then
+		info "no Windows on this machine: no Windows icon"
+		return 0
+	fi
+	# Root-owned and outside my home: pkexec runs it as root, so a file I can
+	# edit without a password must never be what it runs.
+	sudo install -m 755 -o root -g root "$REPO_DIR/dualboot/to-windows" /usr/local/sbin/to-windows
+	install -D -m 644 "$REPO_DIR/dualboot/to-windows.desktop" \
+		"$HOME/.local/share/applications/to-windows.desktop"
+	info "installed the Windows icon (/usr/local/sbin/to-windows)"
 }
 
 # ----------------------------------------------------------- 10. self-check ---
