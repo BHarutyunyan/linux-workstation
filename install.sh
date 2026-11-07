@@ -85,6 +85,13 @@ preflight() {
 		warn "Made for Ubuntu 26.04; this is ${VERSION_ID:-unknown}. GNOME extensions may not match."
 	fi
 
+	# Guard against running it on the wrong laptop (it happened once).
+	if [ "${ASSUME_YES:-0}" != "1" ]; then
+		local answer
+		read -r -p "Set up THIS machine, \"$(hostname)\"? Type yes: " answer
+		[ "$answer" = "yes" ] || die "Stopped. Nothing was changed."
+	fi
+
 	step "Asking for the sudo password once"
 	sudo -v
 	# Keep sudo alive until the script ends, so long downloads don't ask again.
