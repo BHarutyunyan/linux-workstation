@@ -19,6 +19,9 @@
 #     GIT_EMAIL=address  git commit email; skipped if empty
 #     SKIP_APPS=1        skip desktop apps (faster test runs)
 #     SKIP_DESKTOP=1     skip GNOME settings and extensions
+#     CHARGE_START=70    battery starts charging below this %   (ThinkPad only)
+#     CHARGE_END=80      battery stops charging at this %       (ThinkPad only)
+#     CHARGE_CONSERVATION=1  hold about 60%, 0 = charge to 100% (IdeaPad/Legion)
 
 set -euo pipefail
 
@@ -29,6 +32,9 @@ GIT_NAME="${GIT_NAME:-Anmahana}"
 GIT_EMAIL="${GIT_EMAIL:-}"
 SKIP_APPS="${SKIP_APPS:-0}"
 SKIP_DESKTOP="${SKIP_DESKTOP:-0}"
+CHARGE_START="${CHARGE_START:-70}"
+CHARGE_END="${CHARGE_END:-80}"
+CHARGE_CONSERVATION="${CHARGE_CONSERVATION:-1}"
 LOG="$HOME/linux-workstation-install.log"
 STAMP="$(date +%Y%m%d-%H%M%S)"
 TMP_DIR="$(mktemp -d)"
@@ -446,10 +452,57 @@ EOF
 	fi
 }
 
-# ----------------------------------------------------------- 11. self-check ---
+# ------------------------------------------------- 11. battery charge limit ---
+
+setup_battery() {
+	step "11. Battery: do not sit at 100% (systemd service at every boot)"
+	if ! compgen -G "/sys/class/power_supply/BAT*" > /dev/null; then
+		info "no battery on this machine: skipped"
+		return 0
+	fi
+	local changed=0
+	cat > "$TMP_DIR/battery-threshold.service" <<EOF
+[Unit]
+Description=Battery charge limit (${CHARGE_START}-${CHARGE_END}% where supported)
+
+[Service]
+Type=oneshot
+Environment=CHARGE_START=${CHARGE_START}
+Environment=CHARGE_END=${CHARGE_END}
+Environment=CHARGE_CONSERVATION=${CHARGE_CONSERVATION}
+ExecStart=/usr/local/sbin/battery-threshold
+
+[Install]
+WantedBy=multi-user.target
+EOF
+	# Root-owned and outside my home, like to-windows: root runs it at boot.
+	if cmp -s "$REPO_DIR/power/battery-threshold" /usr/local/sbin/battery-threshold; then
+		info "ok      /usr/local/sbin/battery-threshold"
+	else
+		sudo install -m 755 -o root -g root "$REPO_DIR/power/battery-threshold" /usr/local/sbin/battery-threshold
+		info "wrote   /usr/local/sbin/battery-threshold"
+		changed=1
+	fi
+	if cmp -s "$TMP_DIR/battery-threshold.service" /etc/systemd/system/battery-threshold.service; then
+		info "ok      battery-threshold.service"
+	else
+		sudo install -m 644 "$TMP_DIR/battery-threshold.service" /etc/systemd/system/battery-threshold.service
+		info "wrote   battery-threshold.service"
+		changed=1
+	fi
+	if [ "$changed" = 1 ]; then
+		sudo systemctl daemon-reload
+	fi
+	sudo systemctl enable --quiet battery-threshold.service
+	# Run it now too: a oneshot service ends at once, so restart is safe.
+	sudo systemctl restart battery-threshold.service
+	journalctl -u battery-threshold.service -n 1 -o cat --no-pager | sed 's/^/    /'
+}
+
+# ----------------------------------------------------------- 12. self-check ---
 
 self_check() {
-	step "11. Self-check"
+	step "12. Self-check"
 
 	echo "--- TCP ports open to the network (expect only 22):"
 	local exposed
@@ -480,6 +533,12 @@ self_check() {
 	echo "--- Ollama:"
 	info "version $(curl -fs http://127.0.0.1:11434/api/version | jq -r .version)"
 	ollama list
+
+	echo "--- Battery charge limit:"
+	systemctl is-enabled battery-threshold.service 2>/dev/null || info "no battery service"
+	cat /sys/class/power_supply/BAT*/charge_control_{start,end}_threshold 2>/dev/null \
+		|| cat /sys/bus/platform/drivers/ideapad_acpi/*/conservation_mode 2>/dev/null \
+		|| info "no charge limit to show"
 }
 
 # ------------------------------------------------------------------- main ---
@@ -498,6 +557,7 @@ main() {
 	setup_apps
 	setup_desktop
 	setup_auto_upgrade
+	setup_battery
 	self_check
 	step "Done"
 	info "Log out and back in once, so GNOME turns on the extensions."

@@ -33,7 +33,8 @@ cd ~ && wget -qO- https://github.com/BHarutyunyan/linux-workstation/archive/main
 | 8 | Apps | Brave, Claude, ChatGPT, Discord from the vendors' own repositories; the rest from `apps.txt` through `apps.sh` |
 | 9 | GNOME + dual-boot | My keys, layouts (us, ru, am), theme, extensions; a "Windows" icon if Windows is installed |
 | 10 | Daily updates | A systemd timer runs `apt upgrade` and `flatpak update` at the first start of each day (no password, no new packages removed, waits if apt is busy, retries without network) |
-| 11 | Self-check | Lists open ports and fails loudly if anything but 22 listens outside localhost |
+| 11 | Battery charge limit | A boot-time service keeps the battery off 100%: ThinkPad 70–80 %, IdeaPad/Legion conservation mode (about 60 %). The script it runs is root-owned in `/usr/local/sbin`. Skipped without a battery |
+| 12 | Self-check | Lists open ports and fails loudly if anything but 22 listens outside localhost |
 
 After it finishes: log out and in (extensions), then `gh auth login` and `gh auth setup-git`.
 
@@ -72,6 +73,7 @@ dotfiles/                      bashrc, .bash_aliases, .vimrc, .vim/
 gnome/settings.ini             chosen GNOME settings (not a whole dconf dump)
 gnome/extensions/              my own GNOME extension
 dualboot/                      to-windows script and its icon
+power/battery-threshold        battery charge limit, run at boot by a systemd service
 windows/to-ubuntu-setup.ps1    Windows side of the switch
 docs/TESTS.md                  test results and screenshots
 ```
@@ -79,7 +81,8 @@ docs/TESTS.md                  test results and screenshots
 ## Options
 
 `ASSUME_YES=1` (no question), `SKIP_APPS=1`, `SKIP_DESKTOP=1`, `OLLAMA_MODEL=name`,
-`GITHUB_USER=name`, `GIT_EMAIL=address`.
+`GITHUB_USER=name`, `GIT_EMAIL=address`, `CHARGE_START=70`, `CHARGE_END=80`,
+`CHARGE_CONSERVATION=1` (0 lets an IdeaPad/Legion charge to 100 %).
 
 ## No secrets here
 
