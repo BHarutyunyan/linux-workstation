@@ -18,3 +18,8 @@ apt      gnome-calendar
 
 # music: unofficial port of the Windows app, closed source
 flatpak  dev.aunetx.deezer
+snap     hwctl
+apt      flatpak
+apt      gnome-shell-extension-prefs
+apt      linux-modules-nvidia-580-generic-hwe-26.04
+apt      nvidia-driver-580
