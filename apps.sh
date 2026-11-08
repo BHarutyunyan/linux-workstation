@@ -9,6 +9,7 @@
 #     ./apps.sh         on the other laptop: git pull, install what is missing,
 #                       put the dock in the same order
 #     ./apps.sh diff    only show apps here that apps.txt does not list
+#     ./apps.sh dock    replace the dock here with the saved one
 #
 # Safe to run again: it only adds what is missing and never removes anything.
 
@@ -125,20 +126,40 @@ diff_lines() {
 
 in_gnome() { [ -n "${DBUS_SESSION_BUS_ADDRESS:-}" ] && command -v gsettings > /dev/null; }
 
-# Put the dock in the order saved in gnome/settings.ini.
+DOCK_STATE="${XDG_STATE_HOME:-$HOME/.local/state}/linux-workstation/dock-applied"
+
+remember_dock() { mkdir -p "$(dirname "$DOCK_STATE")"; printf '%s\n' "$1" > "$DOCK_STATE"; }
+
+# Put the dock in the order saved in gnome/settings.ini, but never throw away
+# a dock I changed on this machine since the last sync.
 apply_dock() {
-	local fav
+	local fav cur last answer
 	fav="$(grep -m 1 '^favorite-apps=' "$SETTINGS" | cut -d= -f2-)"
 	if [ -z "$fav" ] || ! in_gnome; then
 		info "dock: skipped (no saved order, or no GNOME session here)"
 		return 0
 	fi
-	if [ "$(gsettings get org.gnome.shell favorite-apps)" = "$fav" ]; then
+	cur="$(gsettings get org.gnome.shell favorite-apps)"
+	last="$(cat "$DOCK_STATE" 2>/dev/null || true)"
+	if [ "$cur" = "$fav" ]; then
 		info "ok      dock"
-	else
+	elif [ -n "$last" ] && [ "$cur" = "$last" ]; then
+		# The dock here is untouched since the last sync: take the new order.
 		gsettings set org.gnome.shell favorite-apps "$fav"
 		info "dock: same order as saved"
+	elif [ -n "$last" ]; then
+		warn "dock: you changed it here since the last sync, so it was kept."
+		warn "To share this dock: ./apps.sh save. To take the saved one: ./apps.sh dock"
+		return 0
+	else
+		# First sync on this machine: ask, because only I know which is right.
+		read -r -p "    Dock here differs from the saved one. Use the saved one? [y/N] " answer < /dev/tty || answer=""
+		case "$answer" in
+			y|Y) gsettings set org.gnome.shell favorite-apps "$fav"; info "dock: same order as saved" ;;
+			*)   warn "dock: kept this one. To share it: ./apps.sh save"; return 0 ;;
+		esac
 	fi
+	remember_dock "$fav"
 }
 
 # git pull before installing. If apps.sh itself changed, start the new version.
@@ -175,6 +196,7 @@ save_all() {
 		fav="$(gsettings get org.gnome.shell favorite-apps)"
 		sed -i "s|^favorite-apps=.*|favorite-apps=$fav|" "$SETTINGS"
 		info "dock order saved"
+		remember_dock "$fav"
 	fi
 
 	if [ ! -d "$REPO_DIR/.git" ]; then
@@ -197,6 +219,9 @@ save_all() {
 case "${1:-install}" in
 	install) pull_first "$@"; install_apps; apply_dock ;;
 	save)    save_all ;;
+	dock)    in_gnome || die "no GNOME session here"
+	         gsettings set org.gnome.shell favorite-apps "$(grep -m 1 '^favorite-apps=' "$SETTINGS" | cut -d= -f2-)"
+	         remember_dock "$(gsettings get org.gnome.shell favorite-apps)"; info "dock: same order as saved" ;;
 	diff)    echo "On \"$HOST\" but not in apps.txt:"; diff_lines ;;
-	*)       die "usage: ./apps.sh [save | diff]" ;;
+	*)       die "usage: ./apps.sh [save | diff | dock]" ;;
 esac
