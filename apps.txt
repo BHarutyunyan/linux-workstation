@@ -1,4 +1,5 @@
 # Extra apps, the same on every machine. Read by apps.sh (install.sh step 8 runs it too).
+# "./apps.sh save" adds new lines here for me; I can also edit by hand.
 #     <type>   <name>   [options]   [host=<part of the hostname>]
 # type: apt | snap | flatpak (from Flathub).
 # host= keeps a line to one machine: host=Y520 is only the Legion

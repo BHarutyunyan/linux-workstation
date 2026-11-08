@@ -313,7 +313,8 @@ setup_apps() {
 	fi
 
 	# Everything else (apt, snap, Flathub) is listed in apps.txt.
-	"$REPO_DIR/apps.sh"
+	# APPS_NO_PULL: never "git pull" while install.sh itself is running.
+	APPS_NO_PULL=1 "$REPO_DIR/apps.sh"
 }
 
 # ------------------------------------------------------- 9. GNOME desktop ---

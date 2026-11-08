@@ -36,17 +36,18 @@ cd ~ && wget -qO- https://github.com/BHarutyunyan/linux-workstation/archive/main
 
 After it finishes: log out and in (extensions), then `gh auth login` and `gh auth setup-git`.
 
-## Same apps on both laptops
+## Same apps and dock on both laptops
 
-`apps.txt` is one list (`apt`, `snap` or `flatpak` lines); `apps.sh` installs what is missing
-and never removes anything.
+`apps.txt` is one list (`apt`, `snap` or `flatpak` lines); the dock order is `favorite-apps`
+in `gnome/settings.ini`. `apps.sh` never removes anything.
 
 ```bash
-./apps.sh diff     # on the laptop where I added an app: lines to copy into apps.txt
-./apps.sh          # on the other laptop, after git pull: install what is missing
+./apps.sh save     # laptop I changed: pick new apps for the list, save the dock, commit, push
+./apps.sh          # other laptop: git pull, install what is missing, same dock order
 ```
 
-A line can end with `host=<part of hostname>` to keep an app on one machine only.
+A line in `apps.txt` can end with `host=<part of hostname>` to keep an app on one machine only.
+Sign-ins inside apps are never synced: they stay on each machine.
 
 ## Dual-boot switch
 

@@ -1,19 +1,22 @@
 #!/usr/bin/env bash
 # linux-workstation/apps.sh
 #
-# Keeps the same extra apps on all my machines. The list is apps.txt.
+# Keeps the same extra apps and the same dock on all my machines.
+# The app list is apps.txt; the dock order is "favorite-apps" in gnome/settings.ini.
 #
-#     ./apps.sh         install what apps.txt lists and this machine is missing
-#     ./apps.sh diff    show apps on this machine that apps.txt does not list
+#     ./apps.sh save    on the laptop I changed: asks which new apps to add to
+#                       apps.txt, saves the dock, then commits and pushes
+#     ./apps.sh         on the other laptop: git pull, install what is missing,
+#                       put the dock in the same order
+#     ./apps.sh diff    only show apps here that apps.txt does not list
 #
-# New app on one laptop: "./apps.sh diff", copy its line into apps.txt,
-# commit and push. Other laptop: "git pull && ./apps.sh".
 # Safe to run again: it only adds what is missing and never removes anything.
 
 set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LIST="$REPO_DIR/apps.txt"
+SETTINGS="$REPO_DIR/gnome/settings.ini"
 HOST="$(hostname)"
 
 info() { printf '    %s\n' "$*"; }
@@ -88,10 +91,9 @@ install_apps() {
 }
 
 # Apps that are here but not in apps.txt, printed as ready lines for apps.txt.
-show_diff() {
+diff_lines() {
 	local known name
 	known="$(sed 's/#.*//' "$LIST" | awk 'NF >= 2 { print $2 }')"
-	echo "On \"$HOST\" but not in apps.txt (copy the lines you want everywhere):"
 
 	# snap: skip what Ubuntu itself brings
 	snap list 2>/dev/null | awk 'NR > 1 { print $1 }' | while read -r name; do
@@ -121,11 +123,80 @@ show_diff() {
 		done
 }
 
+in_gnome() { [ -n "${DBUS_SESSION_BUS_ADDRESS:-}" ] && command -v gsettings > /dev/null; }
+
+# Put the dock in the order saved in gnome/settings.ini.
+apply_dock() {
+	local fav
+	fav="$(grep -m 1 '^favorite-apps=' "$SETTINGS" | cut -d= -f2-)"
+	if [ -z "$fav" ] || ! in_gnome; then
+		info "dock: skipped (no saved order, or no GNOME session here)"
+		return 0
+	fi
+	if [ "$(gsettings get org.gnome.shell favorite-apps)" = "$fav" ]; then
+		info "ok      dock"
+	else
+		gsettings set org.gnome.shell favorite-apps "$fav"
+		info "dock: same order as saved"
+	fi
+}
+
+# git pull before installing. If apps.sh itself changed, start the new version.
+pull_first() {
+	local before
+	if [ -n "${APPS_NO_PULL:-}" ] || [ ! -d "$REPO_DIR/.git" ]; then
+		return 0
+	fi
+	before="$(git -C "$REPO_DIR" rev-parse HEAD)"
+	if ! git -C "$REPO_DIR" pull --ff-only -q; then
+		warn "git pull failed (offline, or local changes): using the files as they are"
+		return 0
+	fi
+	if [ "$(git -C "$REPO_DIR" rev-parse HEAD)" != "$before" ]; then
+		info "pulled new changes"
+		APPS_NO_PULL=1 exec "$REPO_DIR/apps.sh" "$@"
+	fi
+}
+
+# On the laptop I changed: new apps into apps.txt, dock into settings.ini, push.
+save_all() {
+	local line answer fav
+	local -a new
+	mapfile -t new < <(diff_lines)
+	for line in "${new[@]}"; do
+		read -r -p "    Add \"$line\" to every machine? [y/N] " answer < /dev/tty
+		case "$answer" in
+			y|Y) echo "$line" >> "$LIST"; info "added   $line" ;;
+			*)   info "skipped $line" ;;
+		esac
+	done
+
+	if in_gnome; then
+		fav="$(gsettings get org.gnome.shell favorite-apps)"
+		sed -i "s|^favorite-apps=.*|favorite-apps=$fav|" "$SETTINGS"
+		info "dock order saved"
+	fi
+
+	if [ ! -d "$REPO_DIR/.git" ]; then
+		warn "not a git clone: saved here only, nothing pushed"
+		return 0
+	fi
+	if git -C "$REPO_DIR" diff --quiet -- apps.txt gnome/settings.ini; then
+		info "nothing new to save"
+		return 0
+	fi
+	# Only these two files: other unfinished work stays uncommitted.
+	git -C "$REPO_DIR" commit -q -m "apps.sh save: apps and dock from $HOST" -- apps.txt gnome/settings.ini
+	git -C "$REPO_DIR" push -q
+	info "pushed. On the other laptop run: ./apps.sh"
+}
+
 [ "$(id -u)" -ne 0 ] || die "run it as your normal user, not with sudo"
 [ -f "$LIST" ] || die "no list: $LIST"
 
 case "${1:-install}" in
-	install) install_apps ;;
-	diff)    show_diff ;;
-	*)       die "usage: ./apps.sh [diff]" ;;
+	install) pull_first "$@"; install_apps; apply_dock ;;
+	save)    save_all ;;
+	diff)    echo "On \"$HOST\" but not in apps.txt:"; diff_lines ;;
+	*)       die "usage: ./apps.sh [save | diff]" ;;
 esac
