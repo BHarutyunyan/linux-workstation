@@ -393,10 +393,63 @@ setup_dualboot() {
 	info "installed the Windows icon (/usr/local/sbin/to-windows)"
 }
 
-# ----------------------------------------------------------- 10. self-check ---
+# ---------------------------------------------------- 10. daily updates ---
+
+setup_auto_upgrade() {
+	step "10. Daily updates: systemd timer, first start of each day"
+	local unit changed=0
+	cat > "$TMP_DIR/daily-upgrade.service" <<'EOF'
+[Unit]
+Description=Daily apt and flatpak upgrade
+Wants=network-online.target
+After=network-online.target
+StartLimitIntervalSec=1h
+StartLimitBurst=5
+
+[Service]
+Type=oneshot
+Environment=DEBIAN_FRONTEND=noninteractive
+ExecStart=/usr/bin/apt-get -o DPkg::Lock::Timeout=600 update -q
+ExecStart=/usr/bin/apt-get -o DPkg::Lock::Timeout=600 -o Dpkg::Options::=--force-confold -y -q upgrade
+ExecStart=-/usr/bin/flatpak update -y --noninteractive
+Restart=on-failure
+RestartSec=5min
+EOF
+	cat > "$TMP_DIR/daily-upgrade.timer" <<'EOF'
+[Unit]
+Description=Upgrade once a day, at the first start of the day
+
+[Timer]
+OnCalendar=daily
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+EOF
+	for unit in daily-upgrade.service daily-upgrade.timer; do
+		if cmp -s "$TMP_DIR/$unit" "/etc/systemd/system/$unit"; then
+			info "ok      $unit"
+		else
+			sudo install -m 644 "$TMP_DIR/$unit" "/etc/systemd/system/$unit"
+			info "wrote   $unit"
+			changed=1
+		fi
+	done
+	if [ "$changed" = 1 ]; then
+		sudo systemctl daemon-reload
+	fi
+	if systemctl is-enabled --quiet daily-upgrade.timer 2>/dev/null; then
+		info "ok      daily-upgrade.timer is enabled"
+	else
+		sudo systemctl enable --now daily-upgrade.timer
+		info "enabled daily-upgrade.timer"
+	fi
+}
+
+# ----------------------------------------------------------- 11. self-check ---
 
 self_check() {
-	step "10. Self-check"
+	step "11. Self-check"
 
 	echo "--- TCP ports open to the network (expect only 22):"
 	local exposed
@@ -444,6 +497,7 @@ main() {
 	setup_ollama
 	setup_apps
 	setup_desktop
+	setup_auto_upgrade
 	self_check
 	step "Done"
 	info "Log out and back in once, so GNOME turns on the extensions."

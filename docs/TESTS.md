@@ -17,6 +17,7 @@ Scanner: **ThinkPad E16**, same home network. Date: 2026-11-07.
 | 9 | Desktop matches my main laptop | Log out and in | **PASS** – 7 extensions on, 3 keyboard layouts, theme, keys |
 | 10 | Dual-boot switch both ways | "Windows" icon in Ubuntu, "To Ubuntu" on the Windows desktop | **PASS** on both laptops |
 | 11 | Code quality | `shellcheck install.sh dualboot/to-windows` | **PASS** – 0 warnings |
+| 12 | Daily updates are scheduled | `systemctl list-timers daily-upgrade.timer --no-pager`; compared `/etc/systemd/system/daily-upgrade.{service,timer}` with the text in `install.sh` | **PASS** – timer enabled, next run `00:00` (E16 and Legion); the two unit files on the Legion are byte-identical to what the script writes, so step 10 has nothing to change. Not yet run end to end through `install.sh` |
 
 ## Self-check output (test 1, end of the run)
 

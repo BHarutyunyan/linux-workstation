@@ -32,7 +32,8 @@ cd ~ && wget -qO- https://github.com/BHarutyunyan/linux-workstation/archive/main
 | 7 | Ollama + `qwen2.5:1.5b` | `OLLAMA_HOST=127.0.0.1:11434`; manual install, so no NVIDIA driver changes |
 | 8 | Apps | Brave, Claude, ChatGPT, Discord from the vendors' own repositories; the rest from `apps.txt` through `apps.sh` |
 | 9 | GNOME + dual-boot | My keys, layouts (us, ru, am), theme, extensions; a "Windows" icon if Windows is installed |
-| 10 | Self-check | Lists open ports and fails loudly if anything but 22 listens outside localhost |
+| 10 | Daily updates | A systemd timer runs `apt upgrade` and `flatpak update` at the first start of each day (no password, no new packages removed, waits if apt is busy, retries without network) |
+| 11 | Self-check | Lists open ports and fails loudly if anything but 22 listens outside localhost |
 
 After it finishes: log out and in (extensions), then `gh auth login` and `gh auth setup-git`.
 
