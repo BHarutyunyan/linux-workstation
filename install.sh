@@ -312,11 +312,8 @@ setup_apps() {
 		apt_install "$TMP_DIR/discord.deb"
 	fi
 
-	local snap_app
-	snap list obsidian > /dev/null 2>&1 || sudo snap install obsidian --classic
-	for snap_app in slack telegram-desktop; do
-		snap list "$snap_app" > /dev/null 2>&1 || sudo snap install "$snap_app"
-	done
+	# Everything else (apt, snap, Flathub) is listed in apps.txt.
+	"$REPO_DIR/apps.sh"
 }
 
 # ------------------------------------------------------- 9. GNOME desktop ---

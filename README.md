@@ -30,11 +30,23 @@ cd ~ && wget -qO- https://github.com/BHarutyunyan/linux-workstation/archive/main
 | 5 | Docker | I am not in the `docker` group: membership equals root |
 | 6 | n8n in Docker | Published on `127.0.0.1:5678` only. Docker writes its own firewall rules and bypasses ufw, so the address is what keeps it private |
 | 7 | Ollama + `qwen2.5:1.5b` | `OLLAMA_HOST=127.0.0.1:11434`; manual install, so no NVIDIA driver changes |
-| 8 | Apps | From the vendors' own repositories: Brave, Claude, ChatGPT, Discord, Obsidian, Slack, Telegram |
+| 8 | Apps | Brave, Claude, ChatGPT, Discord from the vendors' own repositories; the rest from `apps.txt` through `apps.sh` |
 | 9 | GNOME + dual-boot | My keys, layouts (us, ru, am), theme, extensions; a "Windows" icon if Windows is installed |
 | 10 | Self-check | Lists open ports and fails loudly if anything but 22 listens outside localhost |
 
 After it finishes: log out and in (extensions), then `gh auth login` and `gh auth setup-git`.
+
+## Same apps on both laptops
+
+`apps.txt` is one list (`apt`, `snap` or `flatpak` lines); `apps.sh` installs what is missing
+and never removes anything.
+
+```bash
+./apps.sh diff     # on the laptop where I added an app: lines to copy into apps.txt
+./apps.sh          # on the other laptop, after git pull: install what is missing
+```
+
+A line can end with `host=<part of hostname>` to keep an app on one machine only.
 
 ## Dual-boot switch
 
@@ -53,6 +65,7 @@ administrator can write (`/usr/local/sbin`, `C:\Program Files`), never in a user
 
 ```text
 install.sh                     the one command
+apps.sh, apps.txt              extra apps: one list for all my machines
 dotfiles/                      bashrc, .bash_aliases, .vimrc, .vim/
 gnome/settings.ini             chosen GNOME settings (not a whole dconf dump)
 gnome/extensions/              my own GNOME extension

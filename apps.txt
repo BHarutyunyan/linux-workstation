@@ -1,0 +1,19 @@
+# Extra apps, the same on every machine. Read by apps.sh (install.sh step 8 runs it too).
+#     <type>   <name>   [options]   [host=<part of the hostname>]
+# type: apt | snap | flatpak (from Flathub).
+# host= keeps a line to one machine: host=Y520 is only the Legion
+# (anmahana-Lenovo-Y520-15IKBN). No host= means every machine.
+# Brave, Claude, ChatGPT and Discord need their own repositories or .deb files,
+# so they stay in install.sh.
+
+# notes and chat
+snap     obsidian           --classic
+snap     slack
+snap     telegram-desktop
+
+# mail and calendar
+snap     thunderbird
+apt      gnome-calendar
+
+# music: unofficial port of the Windows app, closed source
+flatpak  dev.aunetx.deezer
