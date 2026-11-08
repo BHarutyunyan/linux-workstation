@@ -14,7 +14,7 @@ Scanner: **ThinkPad E16**, same home network. Date: 2026-11-07.
 | 6 | SSH refuses passwords | `ssh -o PubkeyAuthentication=no anmahana@192.168.15.73` | **PASS** – `Permission denied (publickey)` ([screenshot](ssh-password-denied.png)) |
 | 7 | n8n only on localhost | `docker port n8n`, `curl 127.0.0.1:5678` | **PASS** – `127.0.0.1:5678`, HTTP 200 |
 | 8 | Ollama only on localhost | `ss -tln`, `curl 127.0.0.1:11434/api/version` | **PASS** – `127.0.0.1:11434`, version 0.40.15, `qwen2.5:1.5b` loaded |
-| 9 | Desktop matches my main laptop | Log out and in | **PASS** – 6 extensions on, 3 keyboard layouts, theme, keys |
+| 9 | Desktop matches my main laptop | Log out and in | **PASS** – 7 extensions on, 3 keyboard layouts, theme, keys |
 | 10 | Dual-boot switch both ways | "Windows" icon in Ubuntu, "To Ubuntu" on the Windows desktop | **PASS** on both laptops |
 | 11 | Code quality | `shellcheck install.sh dualboot/to-windows` | **PASS** – 0 warnings |
 
@@ -62,6 +62,9 @@ qwen2.5:1.5b    65ec06548149    986 MB    2 minutes ago
 | "To Ubuntu" did nothing on Windows | 1) `bcdedit` labels are translated on Russian Windows; 2) a normal user may not start a SYSTEM task | 1) find the entry by the word `ubuntu` and its `{GUID}`; 2) allow read+execute on that one task (`(A;;GRGX;;;AU)`) |
 | Old "Windows" icon ran a file from my home folder as root | `pkexec /home/…/to-windows.sh`: anything running as me could edit it | Script is now root-owned in `/usr/local/sbin` |
 | Claude app: "Hardware acceleration disabled" | Intel + NVIDIA laptop after a graphics stack update, before reboot | Reboot; not caused by the script |
+| Russian phonetic layout: `ю` and `ч` were on the wrong keys for me | Stock `ru(phonetic)` puts `ю` on the `` ` `` key and `ч` on `=` | Script swaps the two keys with `sed`, only inside the `phonetic` section of `/usr/share/X11/xkb/symbols/ru`; keeps `ru.bak-<date>`; skips if already done. An `xkb-data` update undoes it: run the script again |
+| Soft Brightness Plus stopped working after the script ran | Script sets the whole `enabled-extensions` list, so extensions not in it were switched off | Added `soft-brightness-plus@joelkitching.com` to the list |
+| Dock flickered over maximized apps (Deezer, Firefox) when the top bar was hidden | GNOME "unredirect": a window covering the whole screen skips the compositor, and the dock kept switching this on and off. Found by turning extensions off one by one: Hide Top Bar was the trigger | My dock extension calls `global.compositor.disable_unredirect()` on enable and `enable_unredirect()` on disable |
 
 ## Honest limits
 

@@ -353,6 +353,7 @@ setup_desktop() {
 
 	install_ego_extension hidetopbar@mathieu.bidon.ca
 	install_ego_extension hide-cursor@elcste.com
+	install_ego_extension soft-brightness-plus@joelkitching.com
 	local ext_dir="$HOME/.local/share/gnome-shell/extensions"
 	mkdir -p "$ext_dir"
 	cp -r "$REPO_DIR/gnome/extensions/dock-keyboard-autohide@boris" "$ext_dir/"
@@ -362,6 +363,20 @@ setup_desktop() {
 	# E16-only things (screen scale, recent folders) to this machine.
 	dconf load / < "$REPO_DIR/gnome/settings.ini"
 	info "GNOME settings loaded"
+
+	# Russian phonetic: ч on the ` key, ю on = (stock layout is the other way).
+	# An xkb-data update undoes this: run the script again.
+	local ru=/usr/share/X11/xkb/symbols/ru
+	if sed -n '/xkb_symbols "phonetic"/,/^};/p' "$ru" | grep -q 'key <TLDE>.*Cyrillic_che'; then
+		info "ok      ru(phonetic) ч/ю"
+	else
+		sudo cp "$ru" "$ru.bak-$STAMP"
+		sudo sed -i '/xkb_symbols "phonetic"/,/^};/{
+s/\(key <TLDE>.*\)Cyrillic_yu,\s*Cyrillic_YU/\1Cyrillic_che, Cyrillic_CHE/
+s/\(key <AE12>.*\)Cyrillic_che,\s*Cyrillic_CHE/\1Cyrillic_yu, Cyrillic_YU/
+}' "$ru"
+		info "swapped ч/ю in ru(phonetic), original kept as $ru.bak-$STAMP"
+	fi
 
 	setup_dualboot
 }

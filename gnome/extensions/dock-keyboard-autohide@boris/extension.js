@@ -13,9 +13,12 @@ export default class DockKeyboardAutohide extends Extension {
         this._checkId = 0;
         this._timeoutId = 0;
         this._focusId = global.stage.connect('notify::key-focus', () => this._onKeyFocus());
+        // Stop dock flicker over maximized windows when the top bar is hidden
+        global.compositor.disable_unredirect();
     }
 
     disable() {
+        global.compositor.enable_unredirect();
         if (this._focusId)
             global.stage.disconnect(this._focusId);
         this._focusId = 0;
