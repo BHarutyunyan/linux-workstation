@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Terminal=false
+Name=ChatGPT
+Comment=ChatGPT website in its own Brave window
+Exec=brave-browser --app=https://chatgpt.com/
+Icon=brave-browser
+StartupWMClass=brave-chatgpt.com__-Default
