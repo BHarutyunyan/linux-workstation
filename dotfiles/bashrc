@@ -120,4 +120,15 @@ if ! shopt -oq posix; then
 fi
 export PATH="$HOME/.local/bin:$PATH"
 export PATH="$PATH:$HOME/.venv/bin"
-PS1='\[\e[1;32m\]\u@\h\[\e[0m\]:\[\e[1;34m\]\w\[\e[0m\]\n\$ '
+
+# --- prompt colours (each colour answers one question) ---
+c_who='\[\e[1;90m\]'                   # 90 - who (name and $)
+c_root='\[\e[1;91m\]'                  # 91 - root (#)
+c_where='\[\e[1;95m\]'                 # 95 - where (path)
+c_sep='\[\e[38;2;98;114;164m\]'        # Dracula comment - ":"
+c_input='\[\e[93m\]'                   # 93 - what I type
+c_reset='\[\e[0m\]'
+if [ "$EUID" -eq 0 ]; then c_sign=$c_root; else c_sign=$c_who; fi
+PS1="${c_who}\u@\h${c_sep}:${c_where}\w${c_sign}\\\$${c_reset}\n${c_input}"
+PS0='\e[0m'                            # Enter: reset colour so output is normal
+# --- end ---
