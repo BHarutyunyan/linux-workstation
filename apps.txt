@@ -23,3 +23,15 @@ apt      flatpak
 apt      gnome-shell-extension-prefs
 apt      linux-modules-nvidia-580-generic-hwe-26.04
 apt      nvidia-driver-580
+apt      libreoffice-writer   --no-install-recommends
+snap     trello-desktop
+apt      cloudflared
+apt      grub-customizer
+apt      grub-efi-amd64-bin
+apt      guvcview
+apt      libsecret-tools
+apt      nmap
+apt      python3.14-venv
+apt      shim-signed
+apt      v4l-utils
+apt      vlc
