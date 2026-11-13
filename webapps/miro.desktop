@@ -1,9 +1,0 @@
-[Desktop Entry]
-Version=1.0
-Type=Application
-Terminal=false
-Name=Miro
-Comment=Miro website in its own Brave window
-Exec=brave-browser --app=https://miro.com/
-Icon=brave-browser
-StartupWMClass=brave-miro.com__-Default

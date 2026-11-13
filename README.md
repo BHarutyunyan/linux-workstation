@@ -30,7 +30,7 @@ cd ~ && wget -qO- https://github.com/BHarutyunyan/linux-workstation/archive/main
 | 5 | Docker | I am not in the `docker` group: membership equals root |
 | 6 | n8n in Docker | Published on `127.0.0.1:5678` only. Docker writes its own firewall rules and bypasses ufw, so the address is what keeps it private |
 | 7 | Ollama + `qwen2.5:1.5b` | `OLLAMA_HOST=127.0.0.1:11434`; manual install, so no NVIDIA driver changes |
-| 8 | Apps | Brave, Claude, Discord from the vendors' own repositories; ChatGPT and Miro as Brave web-app launchers (`webapps/`); the rest from `apps.txt` through `apps.sh` |
+| 8 | Apps | Brave, Claude, ChatGPT, Discord from the vendors' own repositories; the rest from `apps.txt` through `apps.sh` |
 | 9 | GNOME + dual-boot | My keys, layouts (us, ru, am), theme, extensions; a "Windows" icon if Windows is installed |
 | 10 | Daily updates | A systemd timer runs `apt upgrade` and `flatpak update` at the first start of each day (no password, no new packages removed, waits if apt is busy, retries without network) |
 | 11 | Battery charge limit | A boot-time service keeps the battery off 100%: ThinkPad 70–80 %, IdeaPad/Legion conservation mode (about 60 %). The script it runs is root-owned in `/usr/local/sbin`. Skipped without a battery |

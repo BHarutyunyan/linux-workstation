@@ -4,8 +4,8 @@
 # type: apt | snap | flatpak (from Flathub).
 # host= keeps a line to one machine: host=Y520 is only the Legion
 # (anmahana-Lenovo-Y520-15IKBN). No host= means every machine.
-# Brave, Claude and Discord need their own repositories or .deb files, so they
-# stay in install.sh. ChatGPT and Miro are Brave web-app launchers (webapps/).
+# Brave, Claude, ChatGPT and Discord need their own repositories or .deb files,
+# so they stay in install.sh.
 
 # notes and chat
 snap     obsidian           --classic

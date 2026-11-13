@@ -305,18 +305,18 @@ setup_apps() {
 	# which is off on the Legion, and 8 GB is too little for its VM.
 	sudo apt-get install -y -q --no-install-recommends claude-desktop
 
-	# Discord ships as a .deb file.
+	# ChatGPT and Discord ship as .deb files. The ChatGPT package adds its
+	# own apt repository, so later updates come with "apt upgrade".
+	if ! is_installed chatgpt; then
+		curl -fsSLo "$TMP_DIR/chatgpt_amd64.deb" \
+			https://persistent.oaistatic.com/codex-app-prod/linux/deb/latest/chatgpt_amd64.deb
+		apt_install "$TMP_DIR/chatgpt_amd64.deb"
+	fi
 	if ! is_installed discord; then
 		curl -fsSLo "$TMP_DIR/discord.deb" \
 			"https://discord.com/api/download?platform=linux&format=deb"
 		apt_install "$TMP_DIR/discord.deb"
 	fi
-
-	# ChatGPT and Miro are the websites in their own Brave windows (the OpenAI
-	# Linux app is a preview with fewer features than the website). The
-	# launchers are linked from this repo, so Brave must be installed first.
-	link_file "$REPO_DIR/webapps/chatgpt.desktop" "$HOME/.local/share/applications/chatgpt-web.desktop"
-	link_file "$REPO_DIR/webapps/miro.desktop"    "$HOME/.local/share/applications/miro-web.desktop"
 
 	# Everything else (apt, snap, Flathub) is listed in apps.txt.
 	# APPS_NO_PULL: never "git pull" while install.sh itself is running.
